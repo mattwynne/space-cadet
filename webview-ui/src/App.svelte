@@ -1,8 +1,10 @@
+
 <script lang="ts">
 	export let types: { name: string, source: { path: string }}[] = []
 
 	import { provideVSCodeDesignSystem, vsCodeButton } from "@vscode/webview-ui-toolkit";
 	import { vscode } from "./utilities/vscode";
+	import Type from "./Type.svelte"
 
 	// In order to use the Webview UI Toolkit web components they
 	// must be registered with the browser (i.e. webview) using the
@@ -23,29 +25,20 @@
 	//
 	// provideVSCodeDesignSystem().register(allComponents);
 
-	function handleHowdyClick() {
-		vscode.postMessage({
-			command: "hello",
-			text: "Hey there partner! 🤠",
-		});
-	}
-
 	window.addEventListener('message', event => {
-		console.log(types)
 		types = event.data.types
   });
 
 	function openFile(path: string) {
 		vscode.postMessage({ command: 'open', path })
 	}
+
 </script>
 
 <main>
 	<ul>
 	{#each types as type}
-		<li on:click={() => openFile(type.source.path)}>
-			<h2>{type.name}</h2>
-		</li>
+		<Type name={type.name} path={type.source.path} handleClick={event => openFile(event.path)}/>
 	{/each}
 	</ul>
 </main>
@@ -53,17 +46,6 @@
 <style>
 	ul {
 		list-style-type: none;
-	}
-
-	li {
-		border: 2px solid;
-		margin: 10px;
-		padding: 5px;
-		display: inline-block;
-	}
-
-	li h2 {
-		border-bottom: 2px solid;
 	}
 
 	main {

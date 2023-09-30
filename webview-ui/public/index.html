@@ -11,3 +11,10 @@
 <body>
 </body>
 </html>
+<script>
+	const types = [
+		{ name: "Foo", source: { path: "foo.ts"} },
+		{ name: "Bar", source: { path: "bar.ts"} }
+	]
+	window.postMessage({types})
+</script>
