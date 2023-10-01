@@ -40,9 +40,9 @@ class Types {
             console.log(sourceFile.fileName);
             ts.forEachChild(sourceFile, findClasses);
             function findClasses(node) {
-                var _a;
                 if (ts.isClassDeclaration(node)) {
-                    result.push(new Class_1.Class(((_a = node.name) === null || _a === void 0 ? void 0 : _a.escapedText) || "Unknown", new Class_1.Source(sourceFile.fileName)));
+                    const name = node.name ? node.name.escapedText.toString() : "Unknown";
+                    result.push(new Class_1.Class(name, new Class_1.Source(sourceFile.fileName)));
                 }
                 ts.forEachChild(node, findClasses);
             }

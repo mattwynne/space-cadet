@@ -25,14 +25,20 @@ class HelloWorldPanel {
      */
     constructor(panel, extensionUri) {
         this._disposables = [];
+        this.state = { types: [] };
         this._panel = panel;
         // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
         // the panel or when the panel is closed programmatically)
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+        this._panel.onDidChangeViewState((e) => {
+            e.webviewPanel.visible && this.renderState();
+        });
         // Set the HTML content for the webview panel
         this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
         // Set an event listener to listen for messages passed from the webview context
         this._setWebviewMessageListener(this._panel.webview);
+        this.refreshState();
+        this.renderState();
     }
     /**
      * Renders the current webview panel if it exists otherwise a new webview panel
@@ -41,7 +47,6 @@ class HelloWorldPanel {
      * @param extensionUri The URI of the directory containing the extension.
      */
     static render(extensionUri) {
-        var _a;
         if (HelloWorldPanel.currentPanel) {
             // If the webview panel already exists reveal it
             HelloWorldPanel.currentPanel._panel.reveal(vscode_1.ViewColumn.One);
@@ -67,20 +72,6 @@ class HelloWorldPanel {
             });
             HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
         }
-        const folders = vscode.workspace.workspaceFolders;
-        if (!folders) {
-            return;
-        }
-        try {
-            const types = Types_1.Types.parseFrom(folders[0]);
-            console.log(types);
-            (_a = HelloWorldPanel.currentPanel) === null || _a === void 0 ? void 0 : _a._panel.webview.postMessage({
-                types,
-            });
-        }
-        catch (error) {
-            console.error(error);
-        }
     }
     /**
      * Cleans up and disposes of webview resources when the webview panel is closed.
@@ -96,6 +87,23 @@ class HelloWorldPanel {
                 disposable.dispose();
             }
         }
+    }
+    renderState() {
+        this._panel.webview.postMessage(this.state);
+        return this;
+    }
+    refreshState() {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders) {
+            return this;
+        }
+        try {
+            this.state.types = Types_1.Types.parseFrom(folders[0]);
+        }
+        catch (error) {
+            console.error(error);
+        }
+        return this;
     }
     /**
      * Defines and returns the HTML that should be rendered within the webview panel.

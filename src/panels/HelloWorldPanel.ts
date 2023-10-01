@@ -3,6 +3,11 @@ import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { Types } from "./Types";
 import * as vscode from "vscode";
+import { Class } from "./Class";
+
+type PanelState = {
+  types: Class[];
+};
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -18,6 +23,7 @@ export class HelloWorldPanel {
   public static currentPanel: HelloWorldPanel | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
+  private state: PanelState = { types: [] };
 
   /**
    * The HelloWorldPanel class private constructor (called only from the render method).
@@ -31,12 +37,17 @@ export class HelloWorldPanel {
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this._panel.onDidChangeViewState((e) => {
+      e.webviewPanel.visible && this.renderState();
+    });
 
     // Set the HTML content for the webview panel
     this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
+    this.refreshState();
+    this.renderState();
   }
 
   /**
@@ -72,21 +83,6 @@ export class HelloWorldPanel {
 
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
     }
-
-    const folders = vscode.workspace.workspaceFolders;
-    if (!folders) {
-      return;
-    }
-
-    try {
-      const types = Types.parseFrom(folders[0]);
-      console.log(types);
-      HelloWorldPanel.currentPanel?._panel.webview.postMessage({
-        types,
-      });
-    } catch (error) {
-      console.error(error);
-    }
   }
 
   /**
@@ -105,6 +101,26 @@ export class HelloWorldPanel {
         disposable.dispose();
       }
     }
+  }
+
+  private renderState(): HelloWorldPanel {
+    this._panel.webview.postMessage(this.state);
+    return this;
+  }
+
+  private refreshState(): HelloWorldPanel {
+    const folders = vscode.workspace.workspaceFolders;
+    if (!folders) {
+      return this;
+    }
+
+    try {
+      this.state.types = Types.parseFrom(folders[0]);
+    } catch (error) {
+      console.error(error);
+    }
+
+    return this;
   }
 
   /**

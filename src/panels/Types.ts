@@ -1,6 +1,5 @@
-import { join } from "path";
 import * as ts from "typescript";
-import { Uri, WorkspaceFolder } from "vscode";
+import { WorkspaceFolder } from "vscode";
 import { Class, Source } from "./Class";
 
 function isNodeExported(node: ts.Node): boolean {
@@ -50,7 +49,8 @@ export class Types {
         ts.forEachChild(sourceFile, findClasses);
         function findClasses(node: ts.Node) {
           if (ts.isClassDeclaration(node)) {
-            result.push(new Class(node.name?.escapedText || "Unknown", new Source(sourceFile.fileName)));
+            const name = node.name ? node.name.escapedText.toString() : "Unknown";
+            result.push(new Class(name, new Source(sourceFile.fileName)));
           }
           ts.forEachChild(node, findClasses);
         }
