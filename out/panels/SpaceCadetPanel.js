@@ -55,9 +55,9 @@ class SpaceCadetPanel {
             // If a webview panel does not already exist create and show a new one
             const panel = vscode_1.window.createWebviewPanel(
             // Panel view type
-            "showHelloWorld", 
+            "explore", 
             // Panel title
-            "Hello World", 
+            "Space Cadet ✨", 
             // The editor column the panel should be displayed in
             vscode_1.ViewColumn.One, 
             // Extra panel configurations
@@ -127,7 +127,7 @@ class SpaceCadetPanel {
       <!DOCTYPE html>
       <html lang="en">
         <head>
-          <title>Hello World</title>
+          <title>Space Cadet</title>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
@@ -165,4 +165,4 @@ class SpaceCadetPanel {
     }
 }
 exports.SpaceCadetPanel = SpaceCadetPanel;
-//# sourceMappingURL=HelloWorldPanel.js.map
+//# sourceMappingURL=SpaceCadetPanel.js.map

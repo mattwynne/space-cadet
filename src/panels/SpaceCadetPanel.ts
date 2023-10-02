@@ -19,8 +19,8 @@ type PanelState = {
  * - Setting the HTML (and by proxy CSS/JavaScript) content of the webview panel
  * - Setting message listeners so data can be passed between the webview and extension
  */
-export class HelloWorldPanel {
-  public static currentPanel: HelloWorldPanel | undefined;
+export class SpaceCadetPanel {
+  public static currentPanel: SpaceCadetPanel | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
   private state: PanelState = { types: [] };
@@ -57,16 +57,16 @@ export class HelloWorldPanel {
    * @param extensionUri The URI of the directory containing the extension.
    */
   public static render(extensionUri: Uri) {
-    if (HelloWorldPanel.currentPanel) {
+    if (SpaceCadetPanel.currentPanel) {
       // If the webview panel already exists reveal it
-      HelloWorldPanel.currentPanel._panel.reveal(ViewColumn.One);
+      SpaceCadetPanel.currentPanel._panel.reveal(ViewColumn.One);
     } else {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
         // Panel view type
-        "showHelloWorld",
+        "explore",
         // Panel title
-        "Hello World",
+        "Space Cadet ✨",
         // The editor column the panel should be displayed in
         ViewColumn.One,
         // Extra panel configurations
@@ -81,7 +81,7 @@ export class HelloWorldPanel {
         }
       );
 
-      HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
+      SpaceCadetPanel.currentPanel = new SpaceCadetPanel(panel, extensionUri);
     }
   }
 
@@ -89,7 +89,7 @@ export class HelloWorldPanel {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    HelloWorldPanel.currentPanel = undefined;
+    SpaceCadetPanel.currentPanel = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();
@@ -103,12 +103,12 @@ export class HelloWorldPanel {
     }
   }
 
-  private renderState(): HelloWorldPanel {
+  private renderState(): SpaceCadetPanel {
     this._panel.webview.postMessage(this.state);
     return this;
   }
 
-  private refreshState(): HelloWorldPanel {
+  private refreshState(): SpaceCadetPanel {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders) {
       return this;
@@ -147,7 +147,7 @@ export class HelloWorldPanel {
       <!DOCTYPE html>
       <html lang="en">
         <head>
-          <title>Hello World</title>
+          <title>Space Cadet</title>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
