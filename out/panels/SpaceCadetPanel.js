@@ -6,12 +6,13 @@ const getUri_1 = require("../utilities/getUri");
 const getNonce_1 = require("../utilities/getNonce");
 const Types_1 = require("./Types");
 const vscode = require("vscode");
+const Class_1 = require("./Class");
 /**
- * This class manages the state and behavior of HelloWorld webview panels.
+ * This class manages the state and behavior of webview panels.
  *
  * It contains all the data and methods for:
  *
- * - Creating and rendering HelloWorld webview panels
+ * - Creating and rendering webview panels
  * - Properly cleaning up and disposing of webview resources when the panel is closed
  * - Setting the HTML (and by proxy CSS/JavaScript) content of the webview panel
  * - Setting message listeners so data can be passed between the webview and extension
@@ -23,7 +24,8 @@ class SpaceCadetPanel {
      * @param panel A reference to the webview panel
      * @param extensionUri The URI of the directory containing the extension
      */
-    constructor(panel, extensionUri) {
+    constructor(panel, extensionUri, stateStore) {
+        this.stateStore = stateStore;
         this._disposables = [];
         this.state = { types: [] };
         this._panel = panel;
@@ -37,7 +39,7 @@ class SpaceCadetPanel {
         this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
         // Set an event listener to listen for messages passed from the webview context
         this._setWebviewMessageListener(this._panel.webview);
-        this.refreshState();
+        this.state = this.stateStore.get("state") || this.refreshState();
         this.renderState();
     }
     /**
@@ -46,7 +48,7 @@ class SpaceCadetPanel {
      *
      * @param extensionUri The URI of the directory containing the extension.
      */
-    static render(extensionUri) {
+    static render(extensionUri, stateStore) {
         if (SpaceCadetPanel.currentPanel) {
             // If the webview panel already exists reveal it
             SpaceCadetPanel.currentPanel._panel.reveal(vscode_1.ViewColumn.One);
@@ -70,7 +72,7 @@ class SpaceCadetPanel {
                     vscode_1.Uri.joinPath(extensionUri, "webview-ui/public/build"),
                 ],
             });
-            SpaceCadetPanel.currentPanel = new SpaceCadetPanel(panel, extensionUri);
+            SpaceCadetPanel.currentPanel = new SpaceCadetPanel(panel, extensionUri, stateStore);
         }
     }
     /**
@@ -95,15 +97,16 @@ class SpaceCadetPanel {
     refreshState() {
         const folders = vscode.workspace.workspaceFolders;
         if (!folders) {
-            return this;
+            return this.state;
         }
         try {
-            this.state.types = Types_1.Types.parseFrom(folders[0]);
+            const types = Types_1.Types.parseFrom(folders[0]);
+            return Object.assign(Object.assign({}, this.state), { types });
         }
         catch (error) {
             console.error(error);
         }
-        return this;
+        return this.state;
     }
     /**
      * Defines and returns the HTML that should be rendered within the webview panel.
@@ -148,18 +151,20 @@ class SpaceCadetPanel {
      */
     _setWebviewMessageListener(webview) {
         webview.onDidReceiveMessage((message) => {
+            console.log(message);
             const command = message.command;
-            const text = message.text;
             switch (command) {
                 case "open":
-                    vscode_1.window.showInformationMessage(JSON.stringify(message));
                     vscode.workspace.openTextDocument(message.path).then(vscode.window.showTextDocument);
-                case "hello":
-                    // Code that should run in response to the hello message command
-                    vscode_1.window.showInformationMessage(text);
                     return;
-                // Add more switch case statements here as more webview message commands
-                // are created within the webview context (i.e. inside media/main.js)
+                case "move":
+                    const type = this.state.types.find((type) => type.source.path === message.path);
+                    if (type) {
+                        type.position = new Class_1.Position(message.x, message.y);
+                    }
+                    this.stateStore.update("state", this.state);
+                    // window.showInformationMessage("State saved: " + JSON.stringify(message));
+                    return;
             }
         }, undefined, this._disposables);
     }

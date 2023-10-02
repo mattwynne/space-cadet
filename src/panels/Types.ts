@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import { WorkspaceFolder } from "vscode";
-import { Class, Source } from "./Class";
+import { Class, Position, Source } from "./Class";
 
 function isNodeExported(node: ts.Node): boolean {
   return (
@@ -50,7 +50,7 @@ export class Types {
         function findClasses(node: ts.Node) {
           if (ts.isClassDeclaration(node)) {
             const name = node.name ? node.name.escapedText.toString() : "Unknown";
-            result.push(new Class(name, new Source(sourceFile.fileName)));
+            result.push(new Class(name, new Source(sourceFile.fileName), Position.unknown));
           }
           ts.forEachChild(node, findClasses);
         }

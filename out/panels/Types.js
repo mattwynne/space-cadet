@@ -42,7 +42,7 @@ class Types {
             function findClasses(node) {
                 if (ts.isClassDeclaration(node)) {
                     const name = node.name ? node.name.escapedText.toString() : "Unknown";
-                    result.push(new Class_1.Class(name, new Class_1.Source(sourceFile.fileName)));
+                    result.push(new Class_1.Class(name, new Class_1.Source(sourceFile.fileName), Class_1.Position.unknown));
                 }
                 ts.forEachChild(node, findClasses);
             }

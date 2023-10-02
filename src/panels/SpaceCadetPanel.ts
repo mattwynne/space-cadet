@@ -3,18 +3,18 @@ import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { Types } from "./Types";
 import * as vscode from "vscode";
-import { Class } from "./Class";
+import { Class, Position } from "./Class";
 
 type PanelState = {
   types: Class[];
 };
 
 /**
- * This class manages the state and behavior of HelloWorld webview panels.
+ * This class manages the state and behavior of webview panels.
  *
  * It contains all the data and methods for:
  *
- * - Creating and rendering HelloWorld webview panels
+ * - Creating and rendering webview panels
  * - Properly cleaning up and disposing of webview resources when the panel is closed
  * - Setting the HTML (and by proxy CSS/JavaScript) content of the webview panel
  * - Setting message listeners so data can be passed between the webview and extension
@@ -31,7 +31,7 @@ export class SpaceCadetPanel {
    * @param panel A reference to the webview panel
    * @param extensionUri The URI of the directory containing the extension
    */
-  private constructor(panel: WebviewPanel, extensionUri: Uri) {
+  private constructor(panel: WebviewPanel, extensionUri: Uri, private stateStore: vscode.Memento) {
     this._panel = panel;
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
@@ -46,7 +46,7 @@ export class SpaceCadetPanel {
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
-    this.refreshState();
+    this.state = this.stateStore.get("state") || this.refreshState();
     this.renderState();
   }
 
@@ -56,7 +56,7 @@ export class SpaceCadetPanel {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri) {
+  public static render(extensionUri: Uri, stateStore: vscode.Memento) {
     if (SpaceCadetPanel.currentPanel) {
       // If the webview panel already exists reveal it
       SpaceCadetPanel.currentPanel._panel.reveal(ViewColumn.One);
@@ -81,7 +81,7 @@ export class SpaceCadetPanel {
         }
       );
 
-      SpaceCadetPanel.currentPanel = new SpaceCadetPanel(panel, extensionUri);
+      SpaceCadetPanel.currentPanel = new SpaceCadetPanel(panel, extensionUri, stateStore);
     }
   }
 
@@ -108,19 +108,19 @@ export class SpaceCadetPanel {
     return this;
   }
 
-  private refreshState(): SpaceCadetPanel {
+  private refreshState(): PanelState {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders) {
-      return this;
+      return this.state;
     }
 
     try {
-      this.state.types = Types.parseFrom(folders[0]);
+      const types = Types.parseFrom(folders[0]);
+      return { ...this.state, types };
     } catch (error) {
       console.error(error);
     }
-
-    return this;
+    return this.state;
   }
 
   /**
@@ -170,19 +170,21 @@ export class SpaceCadetPanel {
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
       (message: any) => {
+        console.log(message);
         const command = message.command;
-        const text = message.text;
 
         switch (command) {
           case "open":
-            window.showInformationMessage(JSON.stringify(message));
             vscode.workspace.openTextDocument(message.path).then(vscode.window.showTextDocument);
-          case "hello":
-            // Code that should run in response to the hello message command
-            window.showInformationMessage(text);
             return;
-          // Add more switch case statements here as more webview message commands
-          // are created within the webview context (i.e. inside media/main.js)
+          case "move":
+            const type = this.state.types.find((type) => type.source.path === message.path);
+            if (type) {
+              type.position = new Position(message.x, message.y);
+            }
+            this.stateStore.update("state", this.state);
+            // window.showInformationMessage("State saved: " + JSON.stringify(message));
+            return;
         }
       },
       undefined,

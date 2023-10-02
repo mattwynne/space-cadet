@@ -6,7 +6,7 @@ const SpaceCadetPanel_1 = require("./panels/SpaceCadetPanel");
 function activate(context) {
     // Add command to the extension context
     context.subscriptions.push(vscode_1.commands.registerCommand("space-cadet.explore", () => {
-        SpaceCadetPanel_1.SpaceCadetPanel.render(context.extensionUri);
+        SpaceCadetPanel_1.SpaceCadetPanel.render(context.extensionUri, context.workspaceState);
     }));
 }
 exports.activate = activate;
