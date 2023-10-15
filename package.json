@@ -38,6 +38,8 @@
     "vscode-test": "^1.5.0"
   },
   "dependencies": {
-    "@neodrag/svelte": "^2.0.3"
+    "@neodrag/svelte": "^2.0.3",
+    "konva": "^9.2.2",
+    "svelte-konva": "^0.3.1"
   }
 }

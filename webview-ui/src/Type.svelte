@@ -1,43 +1,47 @@
 <script type="ts">
-  import { provideVSCodeDesignSystem, vsCodeLink, vsCodeDivider } from "@vscode/webview-ui-toolkit";
-  import { draggable } from "@neodrag/svelte";
-  export let name;
-  export let path;
-  export let handleClick: (event: { path: string }) => void;
-  export let handleMove: (event: { path: string; x: number; y: number }) => void;
-  export let position = { x: 0, y: 0 };
+  import { provideVSCodeDesignSystem, vsCodeLink, vsCodeDivider } from "@vscode/webview-ui-toolkit"
+  import { Label, Tag, Text } from "svelte-konva"
+  export let name
+  export let path
+  export let x
+  export let y
+  export let handleClick: (event: { path: string }) => void
+  export let handleMove: (event: { path: string; x: number; y: number }) => void
 
-  provideVSCodeDesignSystem().register(vsCodeLink(), vsCodeDivider());
+  let labelConfig = {
+    x,
+    y,
+    opacity: 0.8,
+    visible: true,
+    draggable: true,
+  }
+
+  let labelTextConfig = {
+    text: name,
+    fontSize: 18,
+    padding: 5,
+    fill: "white",
+  }
 </script>
 
-<li
-  use:draggable={{
-    position,
-    onDrag: ({ offsetX, offsetY }) => {
-      position = { x: offsetX, y: offsetY };
-      handleMove({ path, x: offsetX, y: offsetY });
-    },
-  }}
+<Label
+  bind:config={labelConfig}
+  on:click={(event) => handleClick({ path, ...event })}
+  on:dragend={handleMove({ path, x: labelConfig.x, y: labelConfig.y })}
 >
-  <h2>
-    <vscode-link on:click={(event) => handleClick({ path, ...event })}>{name} </vscode-link>
-  </h2>
-  <vscode-divider />
-</li>
+  <Tag
+    config={{
+      fill: "black",
+      pointerDirection: "none",
+      lineJoin: "round",
+      shadowColor: "black",
+      shadowBlur: 10,
+      shadowOffsetX: 10,
+      shadowOffsetY: 10,
+      shadowOpacity: 0.5,
+    }}
+  />
+  <Text config={labelTextConfig} />
+</Label>
 
-<style>
-  li {
-    cursor: grab;
-    border: 2px solid;
-    margin: 10px;
-    padding: 5px;
-    display: inline-block;
-    background-color: var(--vscode-editor-background);
-  }
-
-  li h2 {
-    cursor: pointer;
-    display: inline;
-    user-select: none;
-  }
-</style>
+>

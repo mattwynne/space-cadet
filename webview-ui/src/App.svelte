@@ -1,50 +1,52 @@
 <script lang="ts">
-	export let types: { name: string, position: { x: number, y: number}, source: { path: string }}[] = []
+  import { Stage, Layer } from "svelte-konva"
+  export let types: { name: string; position: { x: number; y: number }; source: { path: string } }[] = []
 
-	import { provideVSCodeDesignSystem, vsCodeButton } from "@vscode/webview-ui-toolkit";
-	import { vscode } from "./utilities/vscode";
-	import Type from "./Type.svelte"
+  import { provideVSCodeDesignSystem, vsCodeButton } from "@vscode/webview-ui-toolkit"
+  import { vscode } from "./utilities/vscode"
+  import Type from "./Type.svelte"
 
-	provideVSCodeDesignSystem().register(vsCodeButton());
+  provideVSCodeDesignSystem().register(vsCodeButton())
 
+  window.addEventListener("message", (event) => {
+    types = event.data.types
+  })
 
-	window.addEventListener('message', event => {
-		types = event.data.types
-  });
+  function openFile(path: string) {
+    vscode.postMessage({ command: "open", path })
+  }
 
-	function openFile(path: string) {
-		vscode.postMessage({ command: 'open', path })
-	}
+  function handleMove(event) {
+    vscode.postMessage({ command: "move", ...event })
+  }
 
-	function handleMove(event) {
-		vscode.postMessage({ command: 'move', ...event})
-	}
-
+  const width = window.innerWidth
+  const height = window.innerHeight
 </script>
 
 <main>
-	<ul>
-	{#each types as type}
-		<Type 
-			name={type.name} 
-			path={type.source.path} 
-			position={type.position}
-			handleClick={event => openFile(event.path)} 
-			handleMove={handleMove}/>
-	{/each}
-	</ul>
+  <Stage config={{ width, height }}>
+    <Layer>
+      {#each types as type}
+        <Type
+          name={type.name}
+          path={type.source.path}
+          x={type.position.x}
+          y={type.position.y}
+          handleClick={(event) => openFile(event.path)}
+          {handleMove}
+        />
+      {/each}
+    </Layer>
+  </Stage>
 </main>
 
 <style>
-	ul {
-		list-style-type: none;
-	}
-
-	main {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: flex-start;
-		height: 100%;
-	}
+  main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100%;
+  }
 </style>
