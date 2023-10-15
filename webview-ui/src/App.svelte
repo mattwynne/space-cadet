@@ -9,7 +9,16 @@
   provideVSCodeDesignSystem().register(vsCodeButton())
 
   window.addEventListener("message", (event) => {
-    types = event.data.types
+    types = event.data.types.map((type) => {
+      console.log(type)
+      if (!type.position) {
+        type.position = {
+          x: width * Math.random() * 0.8,
+          y: height * Math.random() * 0.8,
+        }
+      }
+      return type
+    })
   })
 
   function openFile(path: string) {

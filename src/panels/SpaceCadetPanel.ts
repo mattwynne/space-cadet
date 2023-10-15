@@ -1,13 +1,13 @@
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
-import { getUri } from "../utilities/getUri";
-import { getNonce } from "../utilities/getNonce";
-import { Types } from "./Types";
-import * as vscode from "vscode";
-import { Class, Position } from "./Class";
+import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode"
+import { getUri } from "../utilities/getUri"
+import { getNonce } from "../utilities/getNonce"
+import { Types } from "./Types"
+import * as vscode from "vscode"
+import { Class, Position } from "./Class"
 
 type PanelState = {
-  types: Class[];
-};
+  types: Class[]
+}
 
 /**
  * This class manages the state and behavior of webview panels.
@@ -20,10 +20,10 @@ type PanelState = {
  * - Setting message listeners so data can be passed between the webview and extension
  */
 export class SpaceCadetPanel {
-  public static currentPanel: SpaceCadetPanel | undefined;
-  private readonly _panel: WebviewPanel;
-  private _disposables: Disposable[] = [];
-  private state: PanelState = { types: [] };
+  public static currentPanel: SpaceCadetPanel | undefined
+  private readonly _panel: WebviewPanel
+  private _disposables: Disposable[] = []
+  private state: PanelState = { types: [] }
 
   /**
    * The HelloWorldPanel class private constructor (called only from the render method).
@@ -32,22 +32,22 @@ export class SpaceCadetPanel {
    * @param extensionUri The URI of the directory containing the extension
    */
   private constructor(panel: WebviewPanel, extensionUri: Uri, private stateStore: vscode.Memento) {
-    this._panel = panel;
+    this._panel = panel
 
     // Set an event listener to listen for when the panel is disposed (i.e. when the user closes
     // the panel or when the panel is closed programmatically)
-    this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this._panel.onDidDispose(() => this.dispose(), null, this._disposables)
     this._panel.onDidChangeViewState((e) => {
-      e.webviewPanel.visible && this.renderState();
-    });
+      e.webviewPanel.visible && this.renderState()
+    })
 
     // Set the HTML content for the webview panel
-    this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri);
+    this._panel.webview.html = this._getWebviewContent(this._panel.webview, extensionUri)
 
     // Set an event listener to listen for messages passed from the webview context
-    this._setWebviewMessageListener(this._panel.webview);
-    this.state = this.stateStore.get("state") || this.refreshState();
-    this.renderState();
+    this._setWebviewMessageListener(this._panel.webview)
+    this.state = this.stateStore.get("state") || this.refreshState()
+    this.renderState()
   }
 
   /**
@@ -59,7 +59,7 @@ export class SpaceCadetPanel {
   public static render(extensionUri: Uri, stateStore: vscode.Memento) {
     if (SpaceCadetPanel.currentPanel) {
       // If the webview panel already exists reveal it
-      SpaceCadetPanel.currentPanel._panel.reveal(ViewColumn.One);
+      SpaceCadetPanel.currentPanel._panel.reveal(ViewColumn.One)
     } else {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
@@ -79,9 +79,9 @@ export class SpaceCadetPanel {
             Uri.joinPath(extensionUri, "webview-ui/public/build"),
           ],
         }
-      );
+      )
 
-      SpaceCadetPanel.currentPanel = new SpaceCadetPanel(panel, extensionUri, stateStore);
+      SpaceCadetPanel.currentPanel = new SpaceCadetPanel(panel, extensionUri, stateStore)
     }
   }
 
@@ -89,38 +89,38 @@ export class SpaceCadetPanel {
    * Cleans up and disposes of webview resources when the webview panel is closed.
    */
   public dispose() {
-    SpaceCadetPanel.currentPanel = undefined;
+    SpaceCadetPanel.currentPanel = undefined
 
     // Dispose of the current webview panel
-    this._panel.dispose();
+    this._panel.dispose()
 
     // Dispose of all disposables (i.e. commands) for the current webview panel
     while (this._disposables.length) {
-      const disposable = this._disposables.pop();
+      const disposable = this._disposables.pop()
       if (disposable) {
-        disposable.dispose();
+        disposable.dispose()
       }
     }
   }
 
   private renderState(): SpaceCadetPanel {
-    this._panel.webview.postMessage(this.state);
-    return this;
+    this._panel.webview.postMessage(this.state)
+    return this
   }
 
   private refreshState(): PanelState {
-    const folders = vscode.workspace.workspaceFolders;
+    const folders = vscode.workspace.workspaceFolders
     if (!folders) {
-      return this.state;
+      return this.state
     }
 
     try {
-      const types = Types.parseFrom(folders[0]);
-      return { ...this.state, types };
+      const types = Types.parseFrom(folders[0])
+      return { ...this.state, types }
     } catch (error) {
-      console.error(error);
+      console.error(error)
     }
-    return this.state;
+    return this.state
   }
 
   /**
@@ -136,11 +136,11 @@ export class SpaceCadetPanel {
    */
   private _getWebviewContent(webview: Webview, extensionUri: Uri) {
     // The CSS file from the Svelte build output
-    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.css"]);
+    const stylesUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.css"])
     // The JS file from the Svelte build output
-    const scriptUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.js"]);
+    const scriptUri = getUri(webview, extensionUri, ["webview-ui", "public", "build", "bundle.js"])
 
-    const nonce = getNonce();
+    const nonce = getNonce()
 
     // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
     return /*html*/ `
@@ -157,7 +157,7 @@ export class SpaceCadetPanel {
         <body>
         </body>
       </html>
-    `;
+    `
   }
 
   /**
@@ -170,25 +170,25 @@ export class SpaceCadetPanel {
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
       (message: any) => {
-        console.log(message);
-        const command = message.command;
+        console.log(message)
+        const command = message.command
 
         switch (command) {
           case "open":
-            vscode.workspace.openTextDocument(message.path).then(vscode.window.showTextDocument);
-            return;
+            vscode.workspace.openTextDocument(message.path).then(vscode.window.showTextDocument)
+            return
           case "move":
-            const type = this.state.types.find((type) => type.source.path === message.path);
+            const type = this.state.types.find((type) => type.name === message.name)
             if (type) {
-              type.position = new Position(message.x, message.y);
+              type.position = new Position(message.x, message.y)
             }
-            this.stateStore.update("state", this.state);
+            this.stateStore.update("state", this.state)
             // window.showInformationMessage("State saved: " + JSON.stringify(message));
-            return;
+            return
         }
       },
       undefined,
       this._disposables
-    );
+    )
   }
 }

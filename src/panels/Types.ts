@@ -1,60 +1,60 @@
-import * as ts from "typescript";
-import { WorkspaceFolder } from "vscode";
-import { Class, Position, Source } from "./Class";
+import * as ts from "typescript"
+import { WorkspaceFolder } from "vscode"
+import { Class, Position, Source } from "./Class"
 
 function isNodeExported(node: ts.Node): boolean {
   return (
     (ts.getCombinedModifierFlags(node as ts.Declaration) & ts.ModifierFlags.Export) !== 0 ||
     (!!node.parent && node.parent.kind === ts.SyntaxKind.SourceFile)
-  );
+  )
 }
 
 function getTypeNames(sourceFile: ts.SourceFile): string[] {
-  const typeNames: string[] = [];
+  const typeNames: string[] = []
 
   function visit(node: ts.Node) {
     if ((ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node)) && node.name) {
-      typeNames.push(node.name.escapedText.toString());
+      typeNames.push(node.name.escapedText.toString())
     }
-    ts.forEachChild(node, visit);
+    ts.forEachChild(node, visit)
   }
 
-  ts.forEachChild(sourceFile, visit);
-  return typeNames;
+  ts.forEachChild(sourceFile, visit)
+  return typeNames
 }
 
 export class Types {
   static parseFrom(root: WorkspaceFolder): Class[] {
-    const currentDir = root.uri.path;
-    const configFile = ts.findConfigFile(currentDir, ts.sys.fileExists, "tsconfig.json");
+    const currentDir = root.uri.path
+    const configFile = ts.findConfigFile(currentDir, ts.sys.fileExists, "tsconfig.json")
     if (!configFile) {
-      throw Error("tsconfig.json not found");
+      throw Error("tsconfig.json not found")
     }
-    const { config } = ts.readConfigFile(configFile, ts.sys.readFile);
+    const { config } = ts.readConfigFile(configFile, ts.sys.readFile)
 
-    const { options, fileNames, errors } = ts.parseJsonConfigFileContent(config, ts.sys, currentDir);
+    const { options, fileNames, errors } = ts.parseJsonConfigFileContent(config, ts.sys, currentDir)
 
     const program = ts.createProgram({
       options,
       rootNames: fileNames,
       configFileParsingDiagnostics: errors,
-    });
-    const sourceFiles = program.getSourceFiles();
+    })
+    const sourceFiles = program.getSourceFiles()
 
-    const result: Class[] = [];
+    const result: Class[] = []
     sourceFiles
       .filter((file) => !file.fileName.match(/node_modules/))
       .forEach((sourceFile) => {
-        console.log(sourceFile.fileName);
-        ts.forEachChild(sourceFile, findClasses);
+        console.log(sourceFile.fileName)
+        ts.forEachChild(sourceFile, findClasses)
         function findClasses(node: ts.Node) {
           if (ts.isClassDeclaration(node)) {
-            const name = node.name ? node.name.escapedText.toString() : "Unknown";
-            result.push(new Class(name, new Source(sourceFile.fileName), Position.unknown));
+            const name = node.name ? node.name.escapedText.toString() : "Unknown"
+            result.push(new Class(name, new Source(sourceFile.fileName), null))
           }
-          ts.forEachChild(node, findClasses);
+          ts.forEachChild(node, findClasses)
         }
-      });
-    return result;
+      })
+    return result
   }
 }
